@@ -1,4 +1,5 @@
 using CairoMakie
+using ColorSchemes
 
 
 function compute_kpoly(kcap0, kdel0, rcap, Pocc, prvec0)
@@ -28,8 +29,8 @@ end
 
 
 function plot_kpoly_heatmaps(param_sets)
-    Pocc_ratio_range = range(0.9, 1.1, length=20)
-    prveczero_ratio_range = range(0.5, 2.0, length=20)
+    Pocc_ratio_range = range(0.9, 1.1, length=40)
+    prveczero_ratio_range = range(0.5, 2.0, length=40)
     
     # Create figure with proper spacing
     fig = Figure(size=(1200, 400))
@@ -48,20 +49,34 @@ function plot_kpoly_heatmaps(param_sets)
         global_min = 1e-2
         global_max = 1e1
 
+        # Create a custom colormap that changes at 1.0
+        # For log scale data from 0.01 to 10:
+        log_min = log10(global_min)
+        log_max = log10(global_max)
+        log_mid = 0.0  # log10(1.0) = 0
+
+        # Calculate the proportion where 1.0 sits in your log scale
+        mid_point = (log_mid - log_min) / (log_max - log_min)
+
+        # Create diverging colormap with custom center point
+        custom_cmap = cgrad(ColorSchemes.RdBu.colors, [0.0, mid_point, 1.0])
+
         hm = heatmap!(ax, Pocc_ratio_range, prveczero_ratio_range, z,
-                      colormap=:viridis, colorscale=log,
+                    #   colormap=:viridis, 
+                      colormap=custom_cmap, 
+                      colorscale=log10,
                       colorrange=(global_min, global_max),
                     )
         # Add contour line at z = 1.0
         contour!(ax, Pocc_ratio_range, prveczero_ratio_range, z,
-                levels=[1.0], color=:white, linewidth=2)
+                levels=[1.0], color=:black, linewidth=2)
 
         # Add reference point at (1.0, 1.0)
         scatter!(ax, [1.0], [1.0], 
                 color=:white,    # color of the marker
                 markersize=15,   # size of the marker
                 strokewidth=2,   # width of the marker border
-                strokecolor=:white, # color of the marker border
+                strokecolor=:black, # color of the marker border
                 marker=:circle)  # marker shape
     end
 
